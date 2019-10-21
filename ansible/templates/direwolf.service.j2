@@ -1,0 +1,14 @@
+# {{ansible_managed}}
+[Unit]
+Description=Direwolf for SDR iGate Rx Services
+
+[Service]
+Type=simple
+ExecStartPre=+/bin/bash -c 'if ! grep -q "^0$" /sys/module/usbcore/parameters/usbfs_memory_mb ; then echo 0 > /sys/module/usbcore/parameters/usbfs_memory_mb ; fi'
+
+# We need to use bash for the | to be recognized.
+User=pi
+ExecStart=/bin/bash -c 'rtl_fm -d {{ sdr_serial_aprs }} -f 144.39M - | direwolf -c /etc/default/aprs.conf -r 24000 -D 1 -'
+
+[Install]
+WantedBy=multi-user.target

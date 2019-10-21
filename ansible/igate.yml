@@ -1,0 +1,59 @@
+---
+- hosts: rf_recievers
+  remote_user: pi
+  become: yes
+  vars:
+    sdr_serial_aprs: "0"   # S/N or device ID of RTL-SDR.  For setups with only one RTL-SDR connected to the system, 0 should work fine.
+    callsign: "MYCALL"     # Enter your callsign here (no SSID)
+    ssid: "10"             # SSID to use. Rx igates are typically 10
+    aprs_passcode: 00000   # Enter your APRS Passcode to authenticate to APRS-IS. See https://apps.magicbug.co.uk/passcode/
+    latitude: "41.7146"    # Location of station to report - Latitude
+    longitude: "-72.7285"  # Location of station to report - Longitude
+    station_comment: "Rx-only Igate running on a Raspberry Pi 4 w/ RTL-SDR"  # Comment to beacon.  Diplays on APRS.fi
+    aprs_region: "noam"    # APRS regional load-balancer.  See aprs.conf.j2 for valid options
+
+  tasks:
+    - name: install direwolf package
+      apt: 
+        update_cache: yes
+        name: direwolf 
+        state: latest
+        install_recommends: no
+
+    - name : set direwolf service file
+      template:
+        src: direwolf.service.j2
+        dest: /etc/systemd/system/direwolf.service
+        owner: root
+        group: root
+        mode: 0755
+        backup: no
+      register: dw_service_file
+
+    - name : reload systemd config
+      systemd:
+        daemon_reload: yes
+      when: dw_service_file.changed
+    
+    - name : set direwolf config file
+      template:
+        src: aprs.conf.j2
+        dest: /etc/default/aprs.conf
+        owner: pi
+        group: pi
+        mode: 0640
+        backup: yes
+      notify:
+        - restart direwolf
+
+    - name: ensure direwolf services are running
+      service:
+        name: direwolf
+        state: started
+        enabled: yes
+    
+  handlers:
+  - name: restart direwolf
+    service:
+      name: direwolf
+      state: restarted
