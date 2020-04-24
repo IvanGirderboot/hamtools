@@ -10,7 +10,7 @@ import time
 ## Settings
 COM_PORT = 'COM3' # What COM port is the radio connected to?
 BAUD_RATE = 19200 # This Does NOT have to match your CAT software setting.
-RADIO_ID = b'\x95' # ID here is 94, default for the IC-7300  \x means use HEX value
+RADIO_ID = b'\x94' # ID here is 94, default for the IC-7300  b'\x means use HEX value in a byte string
 # Known radio ID's
 # IC-7300: 94
 # IC-7100: 88
@@ -64,7 +64,7 @@ else:
 
 # Wait for and decode response
 time.sleep(1)
-bytes_returned = ser.inWaiting()
+bytes_returned = ser.in_waiting
 response = binascii.hexlify(ser.read(bytes_returned))
 
 # Find response from radio in returned data
